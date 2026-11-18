@@ -19,17 +19,17 @@ ${body}
 </html>`;
 }
 
-function step({ id, n, title, time, manual, children }) {
-  return `<section class="step" id="${id}" data-step="${id}">
-  <header class="step-head">
-    <span class="step-num" aria-hidden="true">${n}</span>
-    <div>
-      <h2>${title}</h2>
-      <p class="step-meta">${time}${manual ? ' · <span class="tag">You do this in Health</span>' : ''}</p>
-    </div>
-  </header>
-  <div class="step-body">${children}</div>
-  <label class="done"><input type="checkbox" id="done-${id}" data-done="${id}"> I've done this step</label>
+function slide({ id, label, title, manual, children, primary, nextText = 'Done, next' }) {
+  return `<section class="slide" id="${id}" data-slide="${id}" aria-label="${esc(label)}">
+  <div class="slide-inner">
+    <p class="kicker">${label}${manual ? ' <span class="tag">In the Health app</span>' : ''}</p>
+    <h2>${title}</h2>
+    <div class="slide-body">${children}</div>
+  </div>
+  <div class="slide-actions">
+    ${primary || ''}
+    <button type="button" class="btn ${primary ? 'ghost' : ''}" data-next>${nextText}</button>
+  </div>
 </section>`;
 }
 
@@ -41,104 +41,115 @@ function setup({ config, arm }) {
 
   const install = config.shortcutIcloudUrl
     ? `<a class="btn" data-event="install_tapped" href="${esc(config.shortcutIcloudUrl)}">Install "${sc}"</a>`
-    : `<p class="notice">The install link isn't set yet. Add SHORTCUT_ICLOUD_URL in Heroku config vars.</p>`;
+    : '';
+  const installNote = config.shortcutIcloudUrl
+    ? ''
+    : '<p class="notice">The install link isn\'t set yet. Add SHORTCUT_ICLOUD_URL in Heroku config vars.</p>';
 
   const nfc = `<div class="variant">
     ${showQr ? '<h3>If your sticker says "Tap here"</h3>' : ''}
     <ol>
-      <li>Open the <b>Shortcuts</b> app and tap <b>Automation</b> at the bottom.</li>
-      <li>Tap <b>New Automation</b> (or <b>+</b>), then choose <b>NFC</b>.</li>
-      <li>Tap <b>Scan</b> and hold the top of your iPhone to the sticker. Name it "Dose sticker".</li>
-      <li>Choose <b>Run Immediately</b>, then pick <b>${sc}</b> and tap <b>Done</b>.</li>
+      <li>In <b>Shortcuts</b>, tap <b>Automation</b>, then <b>New Automation</b>.</li>
+      <li>Choose <b>NFC</b>, tap <b>Scan</b>, and hold your iPhone to the sticker.</li>
+      <li>Choose <b>Run Immediately</b>, pick <b>${sc}</b>, and tap <b>Done</b>.</li>
     </ol>
-    <p class="hint">iPhone needs this one-time link before a sticker tap can open the shortcut.</p>
   </div>`;
-
   const qr = `<div class="variant">
     ${showNfc ? '<h3>If your sticker has a QR code</h3>' : ''}
-    <p>Nothing to set up. Each day, open the Camera, point it at the sticker, and tap the banner that appears.</p>
+    <p>Nothing to set up. Each day, point your Camera at the sticker and tap the banner.</p>
   </div>`;
 
-  const body = `<main class="wrap">
-  <header class="hero">
-    <p class="eyebrow">${esc(config.brandName)}</p>
-    <h1>Set up your daily dose reminder</h1>
-    <p class="lead">Five short steps, about 6 minutes. Keep your medication box and the dose sticker nearby.</p>
-    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="5" aria-valuenow="0"><span></span></div>
-    <p class="progress-label"><span id="done-count">0</span> of 5 done</p>
-  </header>
-
-  ${step({
-    id: 'add', n: 1, title: `Add ${med} to the Health app`, time: 'About 2 minutes', manual: true,
-    children: `<ol>
-      <li>Tap <b>Open Health</b> below.</li>
-      <li>Tap <b>Search</b>, then <b>Medications</b>, then <b>Add a Medication</b>.</li>
-      <li>Tap the camera icon to scan the box label, or type the name.</li>
-      <li>Choose <b>${esc(config.medStrength)}</b>.</li>
-      <li>Set <b>Every Day</b> and the time you usually take it, then tap <b>Done</b>.</li>
-    </ol>
-    <a class="btn" href="${config.healthUrl}">Open Health</a>
-    <p class="hint">Come back to this page when you're done. It remembers where you were.</p>`,
-  })}
-
-  ${step({
-    id: 'remind', n: 2, title: 'Turn on reminders and pin it', time: 'About 30 seconds', manual: true,
-    children: `<ol>
-      <li>In Health, open ${med} and scroll down to <b>Options</b>.</li>
-      <li>Make sure <b>Dose Reminders</b> is on. Turn on <b>Follow-up Reminders</b> too.</li>
-      <li>Tap <b>Add to Favorites</b>. Your medication now shows at the top of Health.</li>
-    </ol>
-    <p class="hint">Each day the reminder has a <b>Taken</b> button. That's the quickest way to log.</p>`,
-  })}
-
-  ${step({
-    id: 'install', n: 3, title: `Add the "${sc}" shortcut`, time: 'About 20 seconds',
-    children: `<ol><li>Tap the button below.</li><li>Tap <b>Add Shortcut</b>. Keep the name as it is.</li></ol>${install}`,
-  })}
-
-  ${step({
-    id: 'sticker', n: 4, title: 'Set up your dose sticker', time: arm === 'a' ? 'No setup needed' : 'About 30 seconds',
-    children: `${showNfc ? nfc : ''}${showQr ? qr : ''}`,
-  })}
-
-  ${step({
-    id: 'test', n: 5, title: 'Stick it up and try it', time: 'About 30 seconds',
-    children: `<ol>
-      <li>Put the sticker where you keep your medication, like the bathroom mirror.</li>
-      <li>${showNfc && !showQr ? 'Hold your iPhone to it' : showQr && !showNfc ? 'Scan it with the Camera' : 'Tap or scan it'}. If asked, tap <b>Allow</b>.</li>
-      <li>Health opens. Tap <b>Log</b> next to ${med}, then <b>Taken</b>.</li>
-    </ol>
-    <a class="btn ghost" data-event="test_tapped" href="${esc(config.runShortcutUrl)}">Or test the shortcut from here</a>`,
-  })}
-
-  <section class="finish" id="finish" hidden>
+  const slides = [
+    slide({
+      id: 'welcome', label: 'Welcome', title: 'Set up your daily dose reminder',
+      children: `<p class="big">5 quick steps, about 6 minutes.</p>
+        <ul class="checks"><li>Your medication box</li><li>Your dose sticker</li><li>Your iPhone</li></ul>
+        <p class="hint">Swipe or tap the button to move between steps.</p>`,
+      nextText: 'Let\'s start',
+    }),
+    slide({
+      id: 'add', label: 'Step 1 of 5', title: `Add ${med} to Health`, manual: true,
+      children: `<ol>
+        <li>In Health, tap <b>Search</b>, then <b>Medications</b>.</li>
+        <li>Tap <b>Add a Medication</b> and scan the label or type the name.</li>
+        <li>Choose <b>${esc(config.medStrength)}</b>.</li>
+        <li>Set <b>Every Day</b> and your usual time. Tap <b>Done</b>.</li>
+      </ol>`,
+      primary: `<a class="btn" href="${config.healthUrl}">Open Health</a>`,
+    }),
+    slide({
+      id: 'remind', label: 'Step 2 of 5', title: 'Turn on reminders', manual: true,
+      children: `<ol>
+        <li>In Health, open ${med} and scroll to <b>Options</b>.</li>
+        <li>Turn on <b>Dose Reminders</b> and <b>Follow-up Reminders</b>.</li>
+        <li>Tap <b>Add to Favorites</b>.</li>
+      </ol>
+      <p class="hint">Each reminder has a <b>Taken</b> button. That's the quickest way to log.</p>`,
+      primary: `<a class="btn" href="${config.healthUrl}">Open Health</a>`,
+    }),
+    slide({
+      id: 'install', label: 'Step 3 of 5', title: `Add the "${sc}" shortcut`,
+      children: `<ol><li>Tap <b>Install</b> below.</li><li>Tap <b>Add Shortcut</b>. Keep the name as it is.</li></ol>${installNote}`,
+      primary: install,
+    }),
+    slide({
+      id: 'sticker', label: 'Step 4 of 5', title: 'Set up your sticker',
+      children: `${showNfc ? nfc : ''}${showQr ? qr : ''}`,
+    }),
+    slide({
+      id: 'test', label: 'Step 5 of 5', title: 'Stick it up and try it',
+      children: `<ol>
+        <li>Put the sticker where you keep your medication.</li>
+        <li>${showNfc && !showQr ? 'Hold your iPhone to it' : showQr && !showNfc ? 'Scan it with the Camera' : 'Tap or scan it'}. If asked, tap <b>Allow</b>.</li>
+        <li>In Health, tap <b>Log</b>, then <b>Taken</b>.</li>
+      </ol>`,
+      primary: `<a class="btn ghost" data-event="test_tapped" href="${esc(config.runShortcutUrl)}">Test the shortcut</a>`,
+      nextText: 'Finish',
+    }),
+    `<section class="slide done-slide" id="finish" data-slide="finish" aria-label="All set">
+  <div class="slide-inner">
+    <div class="done-mark" aria-hidden="true">&#10003;</div>
     <h2>You're all set</h2>
-    <p>Each day: tap <b>Taken</b> on the reminder, or use your sticker and tap <b>Log</b>, then <b>Taken</b>.</p>
-  </section>
+    <p class="big">Each day, tap <b>Taken</b> on your reminder. Or use your sticker, then tap <b>Log</b> and <b>Taken</b>.</p>
+    <p class="hint">Your doses are saved only in the Health app on your iPhone. This page collects no personal or health information.</p>
+  </div>
+  <div class="slide-actions"><button type="button" class="btn ghost" data-restart>Start over</button></div>
+</section>`,
+  ];
 
-  <footer class="foot">
-    <p>This page doesn't collect personal or health information. Your doses are saved only in the Health app on your iPhone. Requires iPhone with iOS 18 or later.</p>
-  </footer>
-</main>`;
-  return layout({ title: `${config.brandName} setup`, body, arm });
+  const body = `<div class="pager-app">
+  <header class="topbar">
+    <span class="brand">${esc(config.brandName)}</span>
+    <ol class="dots" aria-label="Progress">${slides.map((_, i) => `<li><button type="button" data-go="${i}" aria-label="Go to screen ${i + 1}"></button></li>`).join('')}</ol>
+  </header>
+  <main class="pager" id="pager" tabindex="-1">${slides.join('')}</main>
+  <nav class="pager-nav" aria-label="Step navigation">
+    <button type="button" class="navbtn" data-prev aria-label="Previous step">&#8249; Back</button>
+    <span class="pos" id="pos">1 / ${slides.length}</span>
+  </nav>
+</div>`;
+  return layout({ title: `${config.brandName} setup`, body, arm, bodyClass: 'setup' });
 }
 
 function tap({ config, arm }) {
   const med = esc(config.medLabel);
-  const body = `<main class="wrap narrow">
-  <header class="hero">
-    <p class="eyebrow">${esc(config.brandName)}</p>
-    <h1>Log today's dose</h1>
-    <p class="lead">Tap below. Health opens, then tap <b>Log</b> next to ${med} and <b>Taken</b>.</p>
-  </header>
-  <a class="btn big" data-event="tap_run_tapped" href="${esc(config.runShortcutUrl)}">Log my dose</a>
-  <a class="btn ghost" href="${config.healthUrl}">Open Health instead</a>
-  <section class="step">
-    <h2>Skip this page next time</h2>
-    <p>Link your sticker once and a tap will open Health straight away.</p>
-    <a class="btn ghost" href="/?arm=${esc(arm || 'b')}#sticker">Show me how (30 seconds)</a>
-  </section>
-</main>`;
+  const body = `<div class="pager-app">
+  <header class="topbar"><span class="brand">${esc(config.brandName)}</span></header>
+  <main class="single">
+    <section class="slide">
+      <div class="slide-inner">
+        <p class="kicker">Daily dose</p>
+        <h2>Log today's dose</h2>
+        <p class="big">Tap below. Health opens. Then tap <b>Log</b> next to ${med}, and <b>Taken</b>.</p>
+        <p class="hint">Want this to skip straight to Health next time? <a href="/?arm=${esc(arm || 'b')}#sticker">Link your sticker</a> (30 seconds).</p>
+      </div>
+      <div class="slide-actions">
+        <a class="btn" data-event="tap_run_tapped" href="${esc(config.runShortcutUrl)}">Log my dose</a>
+        <a class="btn ghost" href="${config.healthUrl}">Open Health instead</a>
+      </div>
+    </section>
+  </main>
+</div>`;
   return layout({ title: 'Log today\'s dose', body, arm, bodyClass: 'tap' });
 }
 
