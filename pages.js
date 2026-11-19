@@ -19,10 +19,16 @@ ${body}
 </html>`;
 }
 
-function slide({ id, label, title, manual, children, primary, step = false, nextText = 'Done, next' }) {
-  return `<section class="slide" id="${id}" data-slide="${id}"${step ? ` data-step="${id}"` : ''} aria-label="${esc(label)}">
+// Every step screen has the same frame: a header row (step number, where it happens, completed tag),
+// a heading, the instructions, and a fixed two-button action area pinned to the bottom
+// (filled action button on top, outlined "Done, next" below).
+function slide({ id, label, where, title, children, primary, nextText = 'Done, next' }) {
+  return `<section class="slide" id="${id}" data-slide="${id}" data-step="${id}" aria-label="${esc(label)}">
   <div class="slide-inner">
-    <p class="kicker">${label}${manual ? ' <span class="tag">In the Health app</span>' : ''}${step ? ' <span class="done-tag" data-done-tag hidden>&#10003; Completed</span>' : ''}</p>
+    <div class="slide-head">
+      <p class="kicker"><span>${label}</span><span class="kicker-sep" aria-hidden="true">/</span><span>${where}</span></p>
+      <span class="done-tag" data-done-tag hidden>&#10003; Done</span>
+    </div>
     <h2>${title}</h2>
     <div class="slide-body">${children}</div>
   </div>
@@ -49,7 +55,7 @@ function setup({ config, arm }) {
 
   const install = config.shortcutIcloudUrl
     ? `<a class="btn" data-complete data-event="install_tapped" href="${esc(config.shortcutIcloudUrl)}">Install "${sc}"</a>`
-    : '';
+    : `<button type="button" class="btn" disabled>Install "${sc}"</button>`;
   const installNote = config.shortcutIcloudUrl
     ? ''
     : '<p class="notice">The install link isn\'t set yet. Add SHORTCUT_ICLOUD_URL in Heroku config vars.</p>';
@@ -68,52 +74,66 @@ function setup({ config, arm }) {
   </div>`;
 
   const slides = [
+    `<section class="slide splash" id="welcome" data-slide="welcome" aria-label="Welcome">
+  <svg class="splash-art" viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice" aria-hidden="true" focusable="false">
+    <polygon points="-40,0 120,0 440,560 440,800 360,800 -40,100" class="a1"/>
+    <polygon points="440,0 280,0 -40,560 -40,800 40,800 440,100" class="a2"/>
+    <polygon points="0,330 140,400 0,470" class="a3"/>
+    <polygon points="400,330 260,400 400,470" class="a3"/>
+    <line x1="24" y1="352" x2="376" y2="352" class="rule"/>
+    <line x1="24" y1="512" x2="376" y2="512" class="rule"/>
+  </svg>
+  <div class="splash-inner">
+    <p class="splash-brand">${esc(config.brandName)}</p>
+    <div class="splash-copy">
+      <h1>Welcome Kit</h1>
+      <p class="splash-sub">Engineered For Your Routine</p>
+    </div>
+    <div class="splash-actions">
+      <button type="button" class="btn" data-next>Get started</button>
+      <p class="splash-note">5 quick steps · about 6 minutes</p>
+    </div>
+  </div>
+</section>`,
     slide({
-      id: 'welcome', label: 'Welcome', title: 'Set up your daily dose reminder',
-      children: `<p class="big">5 quick steps, about 6 minutes.</p>
-        <ul class="checks"><li>Your medication box</li><li>Your dose sticker</li><li>Your iPhone</li></ul>
-        <p class="hint">Swipe or tap the button to move between steps.</p>`,
-      nextText: 'Let\'s start',
-    }),
-    slide({
-      id: 'add', label: 'Step 1 of 5', title: `Add ${med} to Health`, manual: true,
+      id: 'add', label: 'Step 1 of 5', where: 'In Health', title: `Add ${med} to Health`,
       children: `<ol>
         <li>Tap <b>Add my medication</b>. Health opens on Medications.</li>
         <li>Tap <b>Add a Medication</b>, then scan the label or type the name.</li>
         <li>Enter your own dose from your prescription, like <b>${esc(config.medStrength)}</b>.</li>
         <li>Set how often and what time you take it. Tap <b>Done</b>.</li>
       </ol>`,
-      primary: `<a class="btn" data-complete href="${config.healthUrl}">Add my medication</a>`, step: true,
+      primary: `<a class="btn" data-complete href="${config.healthUrl}">Add my medication</a>`,
     }),
     slide({
-      id: 'remind', label: 'Step 2 of 5', title: 'Turn on reminders', manual: true,
+      id: 'remind', label: 'Step 2 of 5', where: 'In Health', title: 'Turn on reminders',
       children: `<ol>
         <li>In Health, open ${med} and scroll to <b>Options</b>.</li>
         <li>Turn on <b>Dose Reminders</b> and <b>Follow-up Reminders</b>.</li>
         <li>Tap <b>Add to Favorites</b>.</li>
       </ol>
       <p class="hint">Each reminder has a <b>Taken</b> button. That's the quickest way to log.</p>`,
-      primary: `<a class="btn" data-complete href="${config.healthUrl}">Open Health</a>`, step: true,
+      primary: `<a class="btn" data-complete href="${config.healthUrl}">Open Health</a>`,
     }),
     slide({
-      id: 'install', label: 'Step 3 of 5', title: `Add the "${sc}" shortcut`,
+      id: 'install', label: 'Step 3 of 5', where: 'On this page', title: `Add the "${sc}" shortcut`,
       children: `<ol><li>Tap <b>Install</b> below.</li><li>Tap <b>Add Shortcut</b>. Keep the name as it is.</li></ol>${installNote}`,
-      primary: install, step: true,
+      primary: install,
     }),
     slide({
-      id: 'sticker', label: 'Step 4 of 5', title: 'Set up your sticker',
-      children: `${showNfc ? nfc : ''}${showQr ? qr : ''}`, step: true,
-      nextText: arm === 'a' ? 'Got it, next' : 'I linked it, next',
+      id: 'sticker', label: 'Step 4 of 5', where: arm === 'a' ? 'With your sticker' : 'In Shortcuts', title: 'Set up your sticker',
+      children: `${showNfc ? nfc : ''}${showQr ? qr : ''}`,
+      primary: showNfc ? `<a class="btn" href="shortcuts://">Open Shortcuts</a>` : '',
     }),
     slide({
-      id: 'test', label: 'Step 5 of 5', title: 'Stick it up and try it',
+      id: 'test', label: 'Step 5 of 5', where: 'With your sticker', title: 'Stick it up and try it',
       children: `<ol>
         <li>Put the sticker where you keep your medication.</li>
         <li>${showNfc && !showQr ? 'Hold your iPhone to it' : showQr && !showNfc ? 'Scan it with the Camera' : 'Tap or scan it'}. If asked, tap <b>Allow</b>.</li>
         <li>In Health, tap <b>Log</b>, then <b>Taken</b>.</li>
       </ol>`,
-      primary: `<a class="btn ghost" data-complete data-event="test_tapped" href="${esc(config.runShortcutUrl)}">Test the shortcut</a>`,
-      nextText: 'It worked, finish', step: true,
+      primary: `<a class="btn" data-complete data-event="test_tapped" href="${esc(config.runShortcutUrl)}">Test the shortcut</a>`,
+      nextText: 'Done, finish',
     }),
     `<section class="slide done-slide" id="finish" data-slide="finish" aria-label="All set">
   <div class="slide-inner">

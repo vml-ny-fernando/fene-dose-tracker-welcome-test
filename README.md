@@ -25,7 +25,7 @@ Apps and shortcuts cannot add a medication to Health or mark a dose as taken; th
 | --- | --- | --- |
 | `SHORTCUT_ICLOUD_URL` | `https://www.icloud.com/shortcuts/…` | Yes, for step 3 |
 | `APP_URL` | `https://dose-kit-poc.herokuapp.com` | Recommended, so QR codes use the right address |
-| `BRAND_NAME` | `Welcome Kit` | Optional |
+| `BRAND_NAME` | `KODAMANTRO` | Optional. Shown top center on the splash screen |
 | `MED_LABEL` | `your medication` | Optional |
 | `MED_STRENGTH` | `200 mg tablet` | Optional |
 | `SHORTCUT_NAME` | `Log My Dose` | Must match the shared shortcut's name |

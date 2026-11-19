@@ -1,7 +1,7 @@
 // All settings come from environment variables (Heroku: Settings > Config Vars).
 // Nothing here is secret; the app stores no patient data.
 const config = {
-  brandName: process.env.BRAND_NAME || 'Welcome Kit',
+  brandName: process.env.BRAND_NAME || 'KODAMANTRO',
   medLabel: process.env.MED_LABEL || 'your medication',
   medStrength: process.env.MED_STRENGTH || '200 mg tablet',
   shortcutName: process.env.SHORTCUT_NAME || 'Log My Dose',

@@ -102,7 +102,7 @@ code{font-size:14px;background:var(--sky-soft);padding:2px 6px;border-radius:0;o
 @media (prefers-reduced-motion:reduce){.pager{scroll-behavior:auto}.dots button,.btn,.navbtn,a,.slide-body ol li{transition:none}}
 
 /* Stepper: numbered steps under the top bar. Current = navy rule, completed = lime square with a check. */
-.tally{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-variant-numeric:tabular-nums}
+.tally{white-space:nowrap;font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-variant-numeric:tabular-nums}
 .stepper{flex:none;background:var(--white);border-bottom:1px solid var(--rule);padding:0 max(16px,env(safe-area-inset-right)) 0 max(16px,env(safe-area-inset-left))}
 .stepper ol{list-style:none;margin:0 auto;padding:0;display:grid;grid-template-columns:repeat(5,1fr);max-width:560px}
 .st{all:unset;box-sizing:border-box;width:100%;display:grid;justify-items:center;gap:4px;padding:10px 2px 9px;cursor:pointer;
@@ -136,3 +136,35 @@ code{font-size:14px;background:var(--sky-soft);padding:2px 6px;border-radius:0;o
 .sum-go:hover{background:var(--navy);color:var(--white)}
 .sum-go:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
 @media (prefers-reduced-motion:reduce){.st,.st-num,.sum-go{transition:none}}
+
+/* Splash / home screen, after the Welcome Kit card: white ground, lime diagonal X, thin lime rules, navy type.
+   Top bar, stepper and bottom nav hide while it shows. */
+body.on-splash .topbar,body.on-splash .stepper,body.on-splash .pager-nav{display:none}
+.splash{position:relative;overflow:hidden;background:var(--white)}
+.splash-art{position:absolute;inset:0;width:100%;height:100%}
+.splash-art .a1{fill:var(--lime)}
+.splash-art .a2{fill:var(--lime);opacity:.4}
+.splash-art .a3{fill:var(--white);opacity:.9}
+.splash-art .rule{stroke:var(--lime);stroke-width:2}
+.splash-inner{position:relative;flex:1;display:grid;grid-template-rows:auto 1fr auto;
+  padding:calc(28px + env(safe-area-inset-top)) max(24px,env(safe-area-inset-right)) calc(24px + env(safe-area-inset-bottom)) max(24px,env(safe-area-inset-left));
+  max-width:560px;width:100%;margin:0 auto}
+.splash-brand{margin:0;justify-self:center;font-size:13px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;color:var(--navy);
+  background:var(--white);padding:6px 12px}
+.splash-copy{align-self:center;display:grid;gap:12px;background:var(--white);padding:24px 20px;border-top:2px solid var(--navy);border-bottom:2px solid var(--navy)}
+.splash h1{margin:0;font-size:clamp(30px,10.5vw,44px);white-space:nowrap;font-weight:300;letter-spacing:.02em;text-transform:uppercase;color:var(--navy)}
+.splash-sub{margin:0;font-size:17px;color:var(--text-2)}
+.splash-actions{display:grid;gap:12px;background:var(--white);padding:16px 0 0}
+.splash-note{margin:0;text-align:center;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-2)}
+.brand-sep{color:var(--text-2);font-weight:400;margin:0 4px}
+
+/* Consistent step frame */
+.slide-head{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:26px}
+.kicker{gap:8px;flex-wrap:nowrap;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.kicker-sep{color:var(--grey)}
+.done-tag{flex:none}
+.slide-inner h2{min-height:2.2em}
+/* Action area: same height on every screen; buttons stack from the bottom so "Done, next" always sits in the same place */
+.slide-actions{grid-auto-rows:52px;align-content:end;min-height:calc(52px * 2 + 8px + 30px)}
+.btn{height:52px;min-height:52px;padding-top:0;padding-bottom:0}
+.btn[disabled]{background:var(--white);border-color:var(--grey);color:var(--grey);cursor:not-allowed}

@@ -70,6 +70,7 @@
   }
   function update(i) {
     current = i;
+    document.body.classList.toggle('on-splash', slides[i].id === 'welcome');
     prev.disabled = i === 0;
     pos.textContent = (i + 1) + ' / ' + slides.length;
     write(SLIDE_KEY, i);
