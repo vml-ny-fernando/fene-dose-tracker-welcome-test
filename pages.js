@@ -70,12 +70,12 @@ function setup({ config, arm }) {
     slide({
       id: 'add', label: 'Step 1 of 5', title: `Add ${med} to Health`, manual: true,
       children: `<ol>
-        <li>In Health, tap <b>Search</b>, then <b>Medications</b>.</li>
-        <li>Tap <b>Add a Medication</b> and scan the label or type the name.</li>
-        <li>Choose <b>${esc(config.medStrength)}</b>.</li>
-        <li>Set <b>Every Day</b> and your usual time. Tap <b>Done</b>.</li>
+        <li>Tap <b>Add my medication</b>. Health opens on Medications.</li>
+        <li>Tap <b>Add a Medication</b>, then scan the label or type the name.</li>
+        <li>Enter your own dose from your prescription, like <b>${esc(config.medStrength)}</b>.</li>
+        <li>Set how often and what time you take it. Tap <b>Done</b>.</li>
       </ol>`,
-      primary: `<a class="btn" href="${config.healthUrl}">Open Health</a>`,
+      primary: `<a class="btn" href="${config.healthUrl}">Add my medication</a>`,
     }),
     slide({
       id: 'remind', label: 'Step 2 of 5', title: 'Turn on reminders', manual: true,

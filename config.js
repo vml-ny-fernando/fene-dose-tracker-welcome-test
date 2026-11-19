@@ -12,6 +12,7 @@ const config = {
 };
 
 config.runShortcutUrl = `shortcuts://run-shortcut?name=${encodeURIComponent(config.shortcutName)}`;
-config.healthUrl = 'x-apple-health://';
+// Deep link into Health > Medications (undocumented by Apple; override with HEALTH_URL).
+config.healthUrl = process.env.HEALTH_URL || 'x-apple-health://MedicationsHealthAppPlugin.healthplugin';
 
 module.exports = config;

@@ -29,6 +29,7 @@ Apps and shortcuts cannot add a medication to Health or mark a dose as taken; th
 | `MED_LABEL` | `your medication` | Optional |
 | `MED_STRENGTH` | `200 mg tablet` | Optional |
 | `SHORTCUT_NAME` | `Log My Dose` | Must match the shared shortcut's name |
+| `HEALTH_URL` | `x-apple-health://MedicationsHealthAppPlugin.healthplugin` | Optional. Link the "Add my medication" and "Open Health" buttons use |
 
 4. Open `/kit`, print, and test on an iPhone.
 
