@@ -230,3 +230,6 @@ body.on-splash .topbar,body.on-splash .stepper,body.on-splash .pager-nav{display
 body.on-finish .stepper{display:none}
 .slide-inner > *{flex-shrink:0}
 .done-slide .slide-actions{min-height:0}
+
+/* No bottom nav: the action buttons are the bottom of every screen, clear of the home indicator */
+.slide-actions{padding-bottom:calc(16px + env(safe-area-inset-bottom))}

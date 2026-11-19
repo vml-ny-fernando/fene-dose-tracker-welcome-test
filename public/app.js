@@ -87,8 +87,8 @@
     document.body.classList.toggle('on-splash', slides[i].id === 'welcome');
     document.body.classList.toggle('on-finish', slides[i].id === 'finish');
     var inner = slides[i].querySelector('.slide-inner'); if (inner) inner.scrollTop = 0;
-    prev.disabled = i === 0;
-    pos.textContent = (i + 1) + ' / ' + slides.length;
+    if (prev) prev.disabled = i === 0;
+    if (pos) pos.textContent = (i + 1) + ' / ' + slides.length;
     render();
   }
 
@@ -114,7 +114,7 @@
       go(current + 1);
     });
   });
-  prev.addEventListener('click', function () { go(current - 1); });
+  if (prev) prev.addEventListener('click', function () { go(current - 1); });
   document.querySelectorAll('[data-go]').forEach(function (d) {
     d.addEventListener('click', function () { go(parseInt(d.getAttribute('data-go'), 10)); });
   });

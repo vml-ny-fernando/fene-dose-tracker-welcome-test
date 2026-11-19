@@ -188,10 +188,6 @@ function setup({ config, device }) {
     <ol style="grid-template-columns:repeat(${n},1fr)">${steps.map((st, i) => `<li><button type="button" class="st" data-go="${i + 1}" data-st="${st.id}" aria-label="Step ${i + 1}: ${st.long}"><span class="st-num" aria-hidden="true">${i + 1}</span><span class="st-label">${st.short}</span><span class="st-state" data-st-state></span></button></li>`).join('')}</ol>
   </nav>
   <main class="pager" id="pager" tabindex="-1">${slides.join('')}</main>
-  <nav class="pager-nav" aria-label="Step navigation">
-    <button type="button" class="navbtn" data-prev aria-label="Previous step">&#8249; Back</button>
-    <span class="pos" id="pos">1 / ${slides.length}</span>
-  </nav>
 </div>`;
   return layout({ title: `${config.brandName} setup`, body, arm: device, bodyClass: `setup device-${device}` });
 }
