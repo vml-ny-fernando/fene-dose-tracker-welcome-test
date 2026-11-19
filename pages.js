@@ -123,11 +123,12 @@ function setup({ config, device }) {
       id: 'sticker', label: of(3), where: 'With your sticker', title: 'Place your sticker and try it',
       children: `<ol>
         <li>Put the QR sticker where you keep your medication.</li>
-        <li>Point your Camera at it and tap the link that appears.</li>
+        <li>Tap <b>Scan my sticker</b> and point the camera at it.</li>
         <li>Tap <b>Open</b> if asked. Health opens on Medications.</li>
         <li>Tap <b>Log</b> next to ${med}, then <b>Taken</b>.</li>
-      </ol>`,
-      primary: `<a class="btn" data-complete data-event="test_tapped" href="/log?device=ios">Try it now</a>`,
+      </ol>
+      <p class="hint">After today, just scan the sticker with your Camera app.</p>`,
+      primary: `<button type="button" class="btn" data-complete data-scan data-event="test_tapped">Scan my sticker</button>`,
       nextText: 'Done, finish',
     }),
   ];
@@ -148,10 +149,11 @@ function setup({ config, device }) {
       id: 'sticker', label: of(2), where: 'With your sticker', title: 'Place your sticker and try it',
       children: `<ol>
         <li>Put the QR sticker where you keep your medication.</li>
-        <li>Scan it with your Camera or Google Lens and tap the link.</li>
+        <li>Tap <b>Scan my sticker</b> and point the camera at it.</li>
         <li>Tap <b>I took my dose</b>. It's saved on this phone.</li>
-      </ol>`,
-      primary: `<a class="btn" data-complete data-event="test_tapped" href="/log?device=android">Try it now</a>`,
+      </ol>
+      <p class="hint">After today, just scan the sticker with your Camera or Google Lens.</p>`,
+      primary: `<button type="button" class="btn" data-complete data-scan data-event="test_tapped">Scan my sticker</button>`,
       nextText: 'Done, finish',
     }),
   ];
@@ -188,6 +190,16 @@ function setup({ config, device }) {
     <ol style="grid-template-columns:repeat(${n},1fr)">${steps.map((st, i) => `<li><button type="button" class="st" data-go="${i + 1}" data-st="${st.id}" aria-label="Step ${i + 1}: ${st.long}"><span class="st-num" aria-hidden="true">${i + 1}</span><span class="st-label">${st.short}</span><span class="st-state" data-st-state></span></button></li>`).join('')}</ol>
   </nav>
   <main class="pager" id="pager" tabindex="-1">${slides.join('')}</main>
+</div>
+<div class="scanner" id="scanner" role="dialog" aria-modal="true" aria-labelledby="scan-title" hidden>
+  <video id="scan-video" playsinline muted autoplay></video>
+  <div class="scan-frame" aria-hidden="true"></div>
+  <div class="scan-bar">
+    <p class="scan-title" id="scan-title">Point your camera at the sticker</p>
+    <p class="scan-msg" id="scan-msg" role="status" aria-live="polite"></p>
+    <a class="btn ghost scan-alt" id="scan-alt" href="/log?device=${device}" hidden>Open my log without scanning</a>
+    <button type="button" class="btn ghost" id="scan-close">Cancel</button>
+  </div>
 </div>`;
   return layout({ title: `${config.brandName} setup`, body, arm: device, bodyClass: `setup device-${device}` });
 }

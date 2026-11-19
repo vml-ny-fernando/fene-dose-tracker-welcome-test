@@ -19,6 +19,8 @@
   var logEl = document.getElementById('dose-log');
   if (logEl) doseLog();
 
+  scanner();
+
   var pager = document.getElementById('pager');
   if (!pager) return;
   var slides = Array.prototype.slice.call(pager.querySelectorAll('.slide'));
@@ -174,5 +176,98 @@
       save(l); render();
     });
     render();
+  }
+
+  // In-page camera scanner for the "Scan my sticker" button. It reads the sticker's QR
+  // and goes to the log page, which opens Health on Medications (iPhone) or the dose log
+  // (Android). Video frames stay in the browser; nothing is uploaded.
+  function scanner() {
+    var box = document.getElementById('scanner');
+    if (!box) return;
+    var video = document.getElementById('scan-video');
+    var msg = document.getElementById('scan-msg');
+    var alt = document.getElementById('scan-alt');
+    var stream = null, timer = null, detector = null, canvas = null, ctx = null, opener = null;
+
+    function say(t, showAlt) { msg.textContent = t || ''; alt.hidden = !showAlt; }
+    function stop() {
+      clearTimeout(timer); timer = null;
+      if (stream) stream.getTracks().forEach(function (t) { t.stop(); });
+      stream = null; video.srcObject = null;
+    }
+    function close() { stop(); box.hidden = true; document.body.classList.remove('scanning'); if (opener) opener.focus(); }
+    function isSticker(text) {
+      try { return new URL(text, location.href).pathname.replace(/\/$/, '') === '/log'; } catch (e) { return false; }
+    }
+    function found(text) {
+      if (!isSticker(text)) { say("That code isn't your dose sticker. Try again."); return false; }
+      if (navigator.vibrate) navigator.vibrate(60);
+      say('Got it. Opening your medication…');
+      stop();
+      window.location.href = '/log?device=' + (device || '');
+      return true;
+    }
+    function loadJsQR() {
+      return new Promise(function (res, rej) {
+        if (window.jsQR) return res();
+        var sc = document.createElement('script');
+        sc.src = '/static/vendor/jsQR.js'; sc.onload = res; sc.onerror = rej;
+        document.head.appendChild(sc);
+      });
+    }
+    function tick() {
+      if (!stream) return;
+      var next = function () { if (stream) timer = setTimeout(tick, 150); };
+      if (video.readyState < 2 || !video.videoWidth) return next();
+      if (detector) {
+        detector.detect(video).then(function (codes) {
+          if (codes.length && found(codes[0].rawValue)) return;
+          next();
+        }).catch(next);
+        return;
+      }
+      var w = 480, h = Math.round(video.videoHeight * (w / video.videoWidth));
+      if (!canvas) { canvas = document.createElement('canvas'); ctx = canvas.getContext('2d', { willReadFrequently: true }); }
+      canvas.width = w; canvas.height = h;
+      ctx.drawImage(video, 0, 0, w, h);
+      var code = window.jsQR(ctx.getImageData(0, 0, w, h).data, w, h, { inversionAttempts: 'dontInvert' });
+      if (code && code.data && found(code.data)) return;
+      next();
+    }
+    function open(btn) {
+      opener = btn;
+      box.hidden = false; document.body.classList.add('scanning');
+      say('');
+      document.getElementById('scan-close').focus();
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        say("This browser can't open the camera here. Use your Camera app, or open your log below.", true);
+        return;
+      }
+      var ready = ('BarcodeDetector' in window)
+        ? window.BarcodeDetector.getSupportedFormats().then(function (f) {
+            if (f.indexOf('qr_code') > -1) detector = new window.BarcodeDetector({ formats: ['qr_code'] });
+            else return loadJsQR();
+          }).catch(loadJsQR)
+        : loadJsQR();
+      Promise.all([ready, navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false })])
+        .then(function (r) {
+          if (box.hidden) { r[1].getTracks().forEach(function (t) { t.stop(); }); return; }
+          stream = r[1]; video.srcObject = stream;
+          var p = video.play(); if (p && p.catch) p.catch(function () {});
+          tick();
+        })
+        .catch(function (err) {
+          var denied = err && (err.name === 'NotAllowedError' || err.name === 'SecurityError');
+          say(denied
+            ? 'Camera access is off. Tap Allow when asked, or use your Camera app to scan the sticker.'
+            : "The camera couldn't start. Use your Camera app to scan the sticker, or open your log below.", true);
+        });
+    }
+    document.querySelectorAll('[data-scan]').forEach(function (b) {
+      b.addEventListener('click', function () { open(b); });
+    });
+    document.getElementById('scan-close').addEventListener('click', close);
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape' && !box.hidden) close(); });
+    document.addEventListener('visibilitychange', function () { if (document.hidden && !box.hidden) close(); });
   }
 })();

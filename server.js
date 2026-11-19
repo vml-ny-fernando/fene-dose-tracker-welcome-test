@@ -8,6 +8,7 @@ const app = express();
 app.set('trust proxy', true); // Heroku terminates TLS in front of the app
 
 app.use('/static', express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
+app.get('/static/vendor/jsQR.js', (req, res) => res.sendFile(require.resolve('jsqr/dist/jsQR.js'), { maxAge: '1d' }));
 
 // Which phone? ?device=ios|android wins (the "switch" links), otherwise the browser's user agent.
 function deviceOf(req) {
