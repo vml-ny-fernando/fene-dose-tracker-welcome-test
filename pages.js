@@ -19,10 +19,10 @@ ${body}
 </html>`;
 }
 
-function slide({ id, label, title, manual, children, primary, nextText = 'Done, next' }) {
-  return `<section class="slide" id="${id}" data-slide="${id}" aria-label="${esc(label)}">
+function slide({ id, label, title, manual, children, primary, step = false, nextText = 'Done, next' }) {
+  return `<section class="slide" id="${id}" data-slide="${id}"${step ? ` data-step="${id}"` : ''} aria-label="${esc(label)}">
   <div class="slide-inner">
-    <p class="kicker">${label}${manual ? ' <span class="tag">In the Health app</span>' : ''}</p>
+    <p class="kicker">${label}${manual ? ' <span class="tag">In the Health app</span>' : ''}${step ? ' <span class="done-tag" data-done-tag hidden>&#10003; Completed</span>' : ''}</p>
     <h2>${title}</h2>
     <div class="slide-body">${children}</div>
   </div>
@@ -33,6 +33,14 @@ function slide({ id, label, title, manual, children, primary, nextText = 'Done, 
 </section>`;
 }
 
+const STEPS = [
+  { id: 'add', short: 'Add', long: 'Add your medication' },
+  { id: 'remind', short: 'Remind', long: 'Turn on reminders' },
+  { id: 'install', short: 'Install', long: 'Add the shortcut' },
+  { id: 'sticker', short: 'Sticker', long: 'Set up your sticker' },
+  { id: 'test', short: 'Test', long: 'Try it once' },
+];
+
 function setup({ config, arm }) {
   const med = esc(config.medLabel);
   const sc = esc(config.shortcutName);
@@ -40,7 +48,7 @@ function setup({ config, arm }) {
   const showQr = arm !== 'b';
 
   const install = config.shortcutIcloudUrl
-    ? `<a class="btn" data-event="install_tapped" href="${esc(config.shortcutIcloudUrl)}">Install "${sc}"</a>`
+    ? `<a class="btn" data-complete data-event="install_tapped" href="${esc(config.shortcutIcloudUrl)}">Install "${sc}"</a>`
     : '';
   const installNote = config.shortcutIcloudUrl
     ? ''
@@ -75,7 +83,7 @@ function setup({ config, arm }) {
         <li>Enter your own dose from your prescription, like <b>${esc(config.medStrength)}</b>.</li>
         <li>Set how often and what time you take it. Tap <b>Done</b>.</li>
       </ol>`,
-      primary: `<a class="btn" href="${config.healthUrl}">Add my medication</a>`,
+      primary: `<a class="btn" data-complete href="${config.healthUrl}">Add my medication</a>`, step: true,
     }),
     slide({
       id: 'remind', label: 'Step 2 of 5', title: 'Turn on reminders', manual: true,
@@ -85,16 +93,17 @@ function setup({ config, arm }) {
         <li>Tap <b>Add to Favorites</b>.</li>
       </ol>
       <p class="hint">Each reminder has a <b>Taken</b> button. That's the quickest way to log.</p>`,
-      primary: `<a class="btn" href="${config.healthUrl}">Open Health</a>`,
+      primary: `<a class="btn" data-complete href="${config.healthUrl}">Open Health</a>`, step: true,
     }),
     slide({
       id: 'install', label: 'Step 3 of 5', title: `Add the "${sc}" shortcut`,
       children: `<ol><li>Tap <b>Install</b> below.</li><li>Tap <b>Add Shortcut</b>. Keep the name as it is.</li></ol>${installNote}`,
-      primary: install,
+      primary: install, step: true,
     }),
     slide({
       id: 'sticker', label: 'Step 4 of 5', title: 'Set up your sticker',
-      children: `${showNfc ? nfc : ''}${showQr ? qr : ''}`,
+      children: `${showNfc ? nfc : ''}${showQr ? qr : ''}`, step: true,
+      nextText: arm === 'a' ? 'Got it, next' : 'I linked it, next',
     }),
     slide({
       id: 'test', label: 'Step 5 of 5', title: 'Stick it up and try it',
@@ -103,13 +112,15 @@ function setup({ config, arm }) {
         <li>${showNfc && !showQr ? 'Hold your iPhone to it' : showQr && !showNfc ? 'Scan it with the Camera' : 'Tap or scan it'}. If asked, tap <b>Allow</b>.</li>
         <li>In Health, tap <b>Log</b>, then <b>Taken</b>.</li>
       </ol>`,
-      primary: `<a class="btn ghost" data-event="test_tapped" href="${esc(config.runShortcutUrl)}">Test the shortcut</a>`,
-      nextText: 'Finish',
+      primary: `<a class="btn ghost" data-complete data-event="test_tapped" href="${esc(config.runShortcutUrl)}">Test the shortcut</a>`,
+      nextText: 'It worked, finish', step: true,
     }),
     `<section class="slide done-slide" id="finish" data-slide="finish" aria-label="All set">
   <div class="slide-inner">
-    <div class="done-mark" aria-hidden="true">&#10003;</div>
-    <h2>You're all set</h2>
+    <div class="done-mark" aria-hidden="true"></div>
+    <p class="kicker" id="finish-kicker">Setup summary</p>
+    <h2 id="finish-title">You're all set</h2>
+    <ul class="summary" aria-label="Setup steps">${STEPS.map((st, i) => `<li data-summary="${st.id}"><span class="sum-num">${String(i + 1).padStart(2, '0')}</span><span class="sum-label">${st.long}</span><span class="sum-state" data-sum-state>To do</span><button type="button" class="sum-go" data-go="${i + 1}" aria-label="Go back to step ${i + 1}: ${st.long}">Go</button></li>`).join('')}</ul>
     <p class="big">Each day, tap <b>Taken</b> on your reminder. Or use your sticker, then tap <b>Log</b> and <b>Taken</b>.</p>
     <p class="hint">Your doses are saved only in the Health app on your iPhone. This page collects no personal or health information.</p>
   </div>
@@ -120,8 +131,11 @@ function setup({ config, arm }) {
   const body = `<div class="pager-app">
   <header class="topbar">
     <span class="brand">${esc(config.brandName)}</span>
-    <ol class="dots" aria-label="Progress">${slides.map((_, i) => `<li><button type="button" data-go="${i}" aria-label="Go to screen ${i + 1}"></button></li>`).join('')}</ol>
+    <span class="tally" id="tally" aria-live="polite">0 of ${STEPS.length} done</span>
   </header>
+  <nav class="stepper" aria-label="Setup steps">
+    <ol>${STEPS.map((st, i) => `<li><button type="button" class="st" data-go="${i + 1}" data-st="${st.id}" aria-label="Step ${i + 1}: ${st.long}"><span class="st-num" aria-hidden="true">${i + 1}</span><span class="st-label">${st.short}</span><span class="st-state" data-st-state></span></button></li>`).join('')}</ol>
+  </nav>
   <main class="pager" id="pager" tabindex="-1">${slides.join('')}</main>
   <nav class="pager-nav" aria-label="Step navigation">
     <button type="button" class="navbtn" data-prev aria-label="Previous step">&#8249; Back</button>

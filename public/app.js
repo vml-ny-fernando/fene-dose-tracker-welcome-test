@@ -1,4 +1,7 @@
-// Swipeable step pager. Remembers the last screen on this phone only and sends anonymous events.
+// Swipeable step pager with a stepper that shows current and completed steps.
+// A step counts as completed only after a clear action: tapping its action button
+// (Add my medication, Open Health, Install, Test) or its confirm button ("Done, next").
+// Swiping past a step does not complete it. State stays on this phone only.
 (function () {
   var arm = document.body.getAttribute('data-arm') || '';
   function send(name) {
@@ -11,32 +14,67 @@
   var pager = document.getElementById('pager');
   if (!pager) return;
   var slides = Array.prototype.slice.call(pager.querySelectorAll('.slide'));
-  var dots = Array.prototype.slice.call(document.querySelectorAll('[data-go]'));
+  var stepIds = slides.filter(function (s) { return s.hasAttribute('data-step'); }).map(function (s) { return s.id; });
   var prev = document.querySelector('[data-prev]');
   var pos = document.getElementById('pos');
-  var KEY = 'dose-kit-slide';
-  var current = 0, maxSeen = 0;
+  var tally = document.getElementById('tally');
+  var SLIDE_KEY = 'dose-kit-slide', DONE_KEY = 'dose-kit-done';
+  var current = -1;
 
-  function store(i) { try { localStorage.setItem(KEY, String(i)); } catch (e) {} }
-  function stored() { try { return parseInt(localStorage.getItem(KEY) || '0', 10) || 0; } catch (e) { return 0; } }
+  function read(k, fallback) { try { var v = localStorage.getItem(k); return v ? JSON.parse(v) : fallback; } catch (e) { return fallback; } }
+  function write(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  var done = read(DONE_KEY, {});
+
+  function complete(id) {
+    if (!id || done[id]) return;
+    done[id] = true;
+    write(DONE_KEY, done);
+    send('step_done');
+    render();
+  }
+
+  function render() {
+    var count = stepIds.filter(function (id) { return done[id]; }).length;
+    if (tally) tally.textContent = count + ' of ' + stepIds.length + ' done';
+    var curId = slides[current] ? slides[current].id : '';
+
+    document.querySelectorAll('[data-st]').forEach(function (b) {
+      var id = b.getAttribute('data-st');
+      var isDone = !!done[id], isCur = id === curId;
+      b.classList.toggle('is-done', isDone);
+      b.classList.toggle('is-current', isCur);
+      if (isCur) b.setAttribute('aria-current', 'step'); else b.removeAttribute('aria-current');
+      var st = b.querySelector('[data-st-state]');
+      if (st) st.textContent = isDone ? 'Completed' : isCur ? 'Current step' : 'Not done yet';
+    });
+    slides.forEach(function (s) {
+      var tag = s.querySelector('[data-done-tag]');
+      if (tag) tag.hidden = !done[s.id];
+      s.classList.toggle('is-done', !!done[s.id]);
+    });
+    document.querySelectorAll('[data-summary]').forEach(function (li) {
+      var isDone = !!done[li.getAttribute('data-summary')];
+      li.classList.toggle('is-done', isDone);
+      li.querySelector('[data-sum-state]').textContent = isDone ? 'Done' : 'To do';
+      li.querySelector('.sum-go').hidden = isDone;
+    });
+    var title = document.getElementById('finish-title');
+    var kicker = document.getElementById('finish-kicker');
+    if (title) title.textContent = count === stepIds.length ? "You're all set" : 'Almost there';
+    if (kicker) kicker.textContent = count + ' of ' + stepIds.length + ' steps done';
+  }
 
   function go(i, smooth) {
     i = Math.max(0, Math.min(slides.length - 1, i));
-    pager.scrollTo({ left: i * pager.clientWidth, behavior: smooth === false ? 'auto' : 'smooth' });
+    pager.scrollTo({ left: i * pager.clientWidth, behavior: smooth === false ? 'instant' : 'smooth' });
   }
   function update(i) {
-    if (i === current && pos.textContent) { /* still refresh below */ }
     current = i;
-    if (i > maxSeen) maxSeen = i;
-    dots.forEach(function (d, k) {
-      if (k === i) d.setAttribute('aria-current', 'step'); else d.removeAttribute('aria-current');
-      d.classList.toggle('seen', k < i);
-    });
     prev.disabled = i === 0;
     pos.textContent = (i + 1) + ' / ' + slides.length;
-    store(i);
-    var id = slides[i].id;
-    if (history.replaceState) history.replaceState(null, '', location.pathname + location.search + '#' + id);
+    write(SLIDE_KEY, i);
+    if (history.replaceState) history.replaceState(null, '', location.pathname + location.search + '#' + slides[i].id);
+    render();
   }
 
   var t;
@@ -44,33 +82,39 @@
     clearTimeout(t);
     t = setTimeout(function () {
       var i = Math.round(pager.scrollLeft / pager.clientWidth);
-      if (i !== current) {
-        if (i > current) send('step_done');
-        update(i);
-      }
+      if (i !== current) update(i);
     }, 80);
   }, { passive: true });
 
+  document.querySelectorAll('[data-complete]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      var s = a.closest('.slide');
+      complete(s && s.getAttribute('data-step'));
+    });
+  });
   document.querySelectorAll('[data-next]').forEach(function (b) {
-    b.addEventListener('click', function () { go(current + 1); });
+    b.addEventListener('click', function () {
+      var s = b.closest('.slide');
+      complete(s && s.getAttribute('data-step'));
+      go(current + 1);
+    });
   });
   prev.addEventListener('click', function () { go(current - 1); });
-  dots.forEach(function (d) {
+  document.querySelectorAll('[data-go]').forEach(function (d) {
     d.addEventListener('click', function () { go(parseInt(d.getAttribute('data-go'), 10)); });
   });
   var restart = document.querySelector('[data-restart]');
-  if (restart) restart.addEventListener('click', function () { go(0); });
+  if (restart) restart.addEventListener('click', function () { done = {}; write(DONE_KEY, done); go(0); render(); });
 
   document.addEventListener('keydown', function (e) {
+    if (e.target && /INPUT|TEXTAREA/.test(e.target.tagName)) return;
     if (e.key === 'ArrowRight') go(current + 1);
     if (e.key === 'ArrowLeft') go(current - 1);
   });
   window.addEventListener('resize', function () { go(current, false); });
 
   // Start where the link points (#sticker) or where this phone left off.
-  var start = 0;
   var hashIdx = slides.findIndex(function (s) { return '#' + s.id === location.hash; });
-  if (hashIdx > 0) start = hashIdx; else start = Math.min(stored(), slides.length - 1);
-  current = -1;
+  var start = hashIdx > 0 ? hashIdx : Math.min(read(SLIDE_KEY, 0) || 0, slides.length - 1);
   requestAnimationFrame(function () { window.scrollTo(0, 0); go(start, false); update(start); });
 })();
