@@ -3,13 +3,21 @@
 // (Add my medication, Open Health, Install, Test) or its confirm button ("Done, next").
 // Swiping past a step does not complete it. State stays on this phone only.
 (function () {
-  var arm = document.body.getAttribute('data-arm') || '';
+  var device = document.body.getAttribute('data-arm') || '';
   function send(name) {
-    try { navigator.sendBeacon('/e/' + name + (arm ? '?arm=' + arm : '')); } catch (e) {}
+    try { navigator.sendBeacon('/e/' + name + (device ? '?device=' + device : '')); } catch (e) {}
   }
   document.querySelectorAll('[data-event]').forEach(function (a) {
     a.addEventListener('click', function () { send(a.getAttribute('data-event')); });
   });
+
+  // iPhone decal page: open Health right away; the button stays as a fallback.
+  var auto = document.querySelector('[data-autolaunch]');
+  if (auto) setTimeout(function () { window.location.href = auto.getAttribute('href'); }, 400);
+
+  // Android decal page: a simple dose log kept on this phone.
+  var logEl = document.getElementById('dose-log');
+  if (logEl) doseLog();
 
   var pager = document.getElementById('pager');
   if (!pager) return;
@@ -118,4 +126,44 @@
   var hashIdx = slides.findIndex(function (s) { return '#' + s.id === location.hash; });
   var start = hashIdx > 0 ? hashIdx : Math.min(read(SLIDE_KEY, 0) || 0, slides.length - 1);
   requestAnimationFrame(function () { window.scrollTo(0, 0); go(start, false); update(start); });
+
+  function doseLog() {
+    var KEY = 'dose-log';
+    var take = document.getElementById('dose-take');
+    var undo = document.getElementById('dose-undo');
+    var status = document.getElementById('dose-status');
+    var week = document.getElementById('dose-week');
+    function dayKey(d) { return d.getFullYear() + '-' + (d.getMonth() + 1) + '-' + d.getDate(); }
+    function load() { try { return JSON.parse(localStorage.getItem(KEY) || '[]'); } catch (e) { return []; } }
+    function save(list) { try { localStorage.setItem(KEY, JSON.stringify(list.slice(-400))); } catch (e) {} }
+    function render() {
+      var list = load(), today = dayKey(new Date());
+      var todays = list.filter(function (t) { return dayKey(new Date(t)) === today; });
+      if (todays.length) {
+        var t = new Date(todays[todays.length - 1]);
+        status.textContent = 'Logged today at ' + t.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' }) + '.';
+      } else {
+        status.textContent = "You haven't logged a dose today.";
+      }
+      take.textContent = todays.length ? 'Log another dose' : 'I took my dose';
+      undo.hidden = !todays.length;
+      week.innerHTML = '';
+      for (var i = 6; i >= 0; i--) {
+        var d = new Date(); d.setDate(d.getDate() - i);
+        var hit = list.some(function (x) { return dayKey(new Date(x)) === dayKey(d); });
+        var li = document.createElement('li');
+        li.className = hit ? 'is-done' : '';
+        li.innerHTML = '<span class="wk-day">' + d.toLocaleDateString([], { weekday: 'narrow' }) + '</span><span class="wk-mark" aria-hidden="true"></span>';
+        li.setAttribute('aria-label', d.toLocaleDateString([], { weekday: 'long' }) + (hit ? ': logged' : ': not logged'));
+        week.appendChild(li);
+      }
+    }
+    take.addEventListener('click', function () { var l = load(); l.push(new Date().toISOString()); save(l); render(); });
+    undo.addEventListener('click', function () {
+      var l = load(), today = dayKey(new Date());
+      for (var i = l.length - 1; i >= 0; i--) { if (dayKey(new Date(l[i])) === today) { l.splice(i, 1); break; } }
+      save(l); render();
+    });
+    render();
+  }
 })();

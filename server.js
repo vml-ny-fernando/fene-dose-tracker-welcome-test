@@ -9,56 +9,59 @@ app.set('trust proxy', true); // Heroku terminates TLS in front of the app
 
 app.use('/static', express.static(path.join(__dirname, 'public'), { maxAge: '1h' }));
 
-// A/B arm from ?arm=a (QR sticker) or ?arm=b (NFC sticker). Anything else = unknown.
-function armOf(req) {
-  const a = String(req.query.arm || '').toLowerCase();
-  return a === 'a' || a === 'b' ? a : '';
+// Which phone? ?device=ios|android wins (the "switch" links), otherwise the browser's user agent.
+function deviceOf(req) {
+  const q = String(req.query.device || '').toLowerCase();
+  if (q === 'ios' || q === 'android') return q;
+  const ua = req.get('user-agent') || '';
+  if (/android/i.test(ua)) return 'android';
+  if (/iphone|ipad|ipod/i.test(ua) || (/macintosh/i.test(ua) && /mobile/i.test(ua))) return 'ios';
+  return 'unknown';
 }
 
 function baseUrl(req) {
   return config.appUrl || `${req.protocol}://${req.get('host')}`;
 }
 
-// Anonymous event line for Heroku logs: no IP, no user agent, no identifiers.
+// Anonymous event line for Heroku logs: no IP, no user agent string, no identifiers.
 function logEvent(name, req) {
-  console.log(JSON.stringify({ event: name, arm: armOf(req) || 'none', at: new Date().toISOString() }));
+  console.log(JSON.stringify({ event: name, device: deviceOf(req), at: new Date().toISOString() }));
 }
 
 app.get('/', (req, res) => {
   logEvent('setup_view', req);
-  res.send(pages.setup({ config, arm: armOf(req) }));
+  const device = deviceOf(req);
+  res.send(pages.setup({ config, device: device === 'unknown' ? 'ios' : device }));
 });
 
-app.get('/tap', (req, res) => {
-  logEvent('tap_fallback_view', req);
-  res.send(pages.tap({ config, arm: armOf(req) }));
+// The QR decal points here: one printed code for iPhone and Android.
+app.get('/log', (req, res) => {
+  logEvent('decal_scan', req);
+  res.set('Cache-Control', 'no-store').send(pages.log({ config, device: deviceOf(req) }));
 });
+app.get('/tap', (req, res) => res.redirect(302, '/log')); // old NFC fallback link
 
 app.get('/kit', (req, res) => {
   res.send(pages.kit({ config, base: baseUrl(req) }));
 });
 
-// QR images: /qr/start-a.svg, /qr/start-b.svg, /qr/sticker.svg
+// QR images: /qr/start.svg (Start card) and /qr/decal.svg (dose decal)
 app.get('/qr/:which.svg', async (req, res, next) => {
   const base = baseUrl(req);
-  const targets = {
-    'start-a': `${base}/?arm=a`,
-    'start-b': `${base}/?arm=b`,
-    sticker: config.runShortcutUrl,
-  };
+  const targets = { start: `${base}/`, decal: `${base}/log` };
   const text = targets[req.params.which];
   if (!text) return res.status(404).send('Unknown QR code');
   try {
-    const svg = await QRCode.toString(text, { type: 'svg', errorCorrectionLevel: 'M', margin: 2 });
+    const svg = await QRCode.toString(text, { type: 'svg', errorCorrectionLevel: 'Q', margin: 2 });
     res.type('image/svg+xml').set('Cache-Control', 'public, max-age=300').send(svg);
   } catch (err) {
     next(err);
   }
 });
 
-// Small client-side events (step ticked, test button pressed), same anonymous format.
+// Small client-side events, same anonymous format.
 app.post('/e/:name', (req, res) => {
-  const allowed = new Set(['step_done', 'install_tapped', 'test_tapped', 'tap_run_tapped']);
+  const allowed = new Set(['step_done', 'test_tapped', 'calendar_tapped', 'log_open_health', 'log_taken']);
   if (allowed.has(req.params.name)) logEvent(req.params.name, req);
   res.status(204).end();
 });

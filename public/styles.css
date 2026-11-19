@@ -168,3 +168,15 @@ body.on-splash .topbar,body.on-splash .stepper,body.on-splash .pager-nav{display
 .slide-actions{grid-auto-rows:52px;align-content:end;min-height:calc(52px * 2 + 8px + 30px)}
 .btn{height:52px;min-height:52px;padding-top:0;padding-bottom:0}
 .btn[disabled]{background:var(--white);border-color:var(--grey);color:var(--grey);cursor:not-allowed}
+
+/* Device switch link on the splash */
+.splash-switch{margin:0;text-align:center;font-size:13px}
+.splash-switch a{color:var(--navy)}
+
+/* Android dose log: last 7 days */
+.dose-log{display:grid;gap:16px}
+.week{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(7,1fr);gap:6px;border-top:2px solid var(--navy);padding-top:12px}
+.week li{display:grid;justify-items:center;gap:6px;font-size:12px;color:var(--text-2);letter-spacing:.06em}
+.wk-mark{width:100%;max-width:36px;height:36px;border:1px solid var(--grey)}
+.week li.is-done .wk-mark{background:var(--lime);border-color:var(--lime)}
+.week li.is-done{color:var(--navy);font-weight:700}
