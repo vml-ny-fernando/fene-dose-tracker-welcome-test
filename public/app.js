@@ -89,8 +89,6 @@
     var inner = slides[i].querySelector('.slide-inner'); if (inner) inner.scrollTop = 0;
     prev.disabled = i === 0;
     pos.textContent = (i + 1) + ' / ' + slides.length;
-    write(SLIDE_KEY, i);
-    if (history.replaceState) history.replaceState(null, '', location.pathname + location.search + '#' + slides[i].id);
     render();
   }
 
@@ -130,9 +128,12 @@
   });
   window.addEventListener('resize', function () { go(current, false); });
 
-  // Start where the link points (#sticker) or where this phone left off.
+  // Every visit (scan or refresh) starts on the splash screen. Only an explicit link
+  // such as /#sticker opens a specific step. Completed ticks are kept on this phone.
   var hashIdx = slides.findIndex(function (s) { return '#' + s.id === location.hash; });
-  var start = hashIdx > 0 ? hashIdx : Math.min(read(SLIDE_KEY, 0) || 0, slides.length - 1);
+  var start = hashIdx > 0 ? hashIdx : 0;
+  if (hashIdx > 0 && history.replaceState) history.replaceState(null, '', location.pathname + location.search);
+  try { localStorage.removeItem(SLIDE_KEY); } catch (e) {}
   requestAnimationFrame(function () { window.scrollTo(0, 0); go(start, false); update(start); });
 
   function doseLog() {
