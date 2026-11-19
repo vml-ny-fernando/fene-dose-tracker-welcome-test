@@ -2,6 +2,11 @@
 const esc = (s) =>
   String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
+// Changes whenever app.js or styles.css change, so phones never run a stale cached copy.
+const ASSET_V = require('crypto').createHash('sha1')
+  .update(['app.js', 'styles.css'].map((f) => require('fs').readFileSync(require('path').join(__dirname, 'public', f))).join(''))
+  .digest('hex').slice(0, 8);
+
 function layout({ title, body, arm = '', bodyClass = '' }) {
   return `<!doctype html>
 <html lang="en">
@@ -10,11 +15,11 @@ function layout({ title, body, arm = '', bodyClass = '' }) {
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>${esc(title)}</title>
-<link rel="stylesheet" href="/static/styles.css">
+<link rel="stylesheet" href="/static/styles.css?v=${ASSET_V}">
 </head>
 <body class="${bodyClass}" data-arm="${esc(arm)}">
 ${body}
-<script src="/static/app.js" defer></script>
+<script src="/static/app.js?v=${ASSET_V}" defer></script>
 </body>
 </html>`;
 }
