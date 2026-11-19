@@ -38,3 +38,15 @@ test('QR codes, kit page and old link', async () => {
   const old = await fetch(base + '/tap', { redirect: 'manual' });
   assert.strictEqual(old.status, 302);
 });
+
+test('/log opens the Log Dose sheet when a medication name is given', async () => {
+  const app = require('../server');
+  const srv = app.listen(0); const port = srv.address().port;
+  try {
+    const r = await fetch(`http://127.0.0.1:${port}/log?device=ios&med=WPPRX002`);
+    const html = await r.text();
+    require('node:assert').ok(html.includes('x-apple-health://MedicationsHealthAppPlugin.healthplugin/logDose?presentWithAnimation=1&amp;medicationName=WPPRX002'));
+    const q = await fetch(`http://127.0.0.1:${port}/qr/decal.svg?med=WPPRX002`);
+    require('node:assert').equal(q.status, 200);
+  } finally { srv.close(); }
+});

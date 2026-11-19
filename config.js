@@ -15,4 +15,10 @@ config.runShortcutUrl = `shortcuts://run-shortcut?name=${encodeURIComponent(conf
 // Deep link into Health > Medications (undocumented by Apple; override with HEALTH_URL).
 config.healthUrl = process.env.HEALTH_URL || 'x-apple-health://MedicationsHealthAppPlugin.healthplugin';
 
+// Name of the medication exactly as it appears in Health (case sensitive). When set, the
+// sticker opens Health's Log Dose sheet for it directly. A sticker can also carry ?med=Name.
+config.medHealthName = process.env.MED_HEALTH_NAME || '';
+config.logDoseUrl = (name) =>
+  `x-apple-health://MedicationsHealthAppPlugin.healthplugin/logDose?presentWithAnimation=1&medicationName=${encodeURIComponent(name)}`;
+
 module.exports = config;

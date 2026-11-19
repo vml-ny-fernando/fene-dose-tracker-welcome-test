@@ -199,12 +199,18 @@
     function isSticker(text) {
       try { return new URL(text, location.href).pathname.replace(/\/$/, '') === '/log'; } catch (e) { return false; }
     }
+    function logPath(text) {
+      // Keep the sticker's own settings (like ?med=Name) and add this phone's type.
+      var q = new URL(text, location.href).searchParams;
+      if (device) q.set('device', device);
+      return '/log?' + q.toString();
+    }
     function found(text) {
       if (!isSticker(text)) { say("That code isn't your dose sticker. Try again."); return false; }
       if (navigator.vibrate) navigator.vibrate(60);
       say('Got it. Opening your medication…');
       stop();
-      window.location.href = '/log?device=' + (device || '');
+      window.location.href = logPath(text);
       return true;
     }
     function loadJsQR() {

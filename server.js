@@ -38,7 +38,8 @@ app.get('/', (req, res) => {
 // The QR decal points here: one printed code for iPhone and Android.
 app.get('/log', (req, res) => {
   logEvent('decal_scan', req);
-  res.set('Cache-Control', 'no-store').send(pages.log({ config, device: deviceOf(req) }));
+  const medName = String(req.query.med || config.medHealthName || '').slice(0, 100);
+  res.set('Cache-Control', 'no-store').send(pages.log({ config, device: deviceOf(req), medName }));
 });
 app.get('/tap', (req, res) => res.redirect(302, '/log')); // old NFC fallback link
 
@@ -49,7 +50,8 @@ app.get('/kit', (req, res) => {
 // QR images: /qr/start.svg (Start card) and /qr/decal.svg (dose decal)
 app.get('/qr/:which.svg', async (req, res, next) => {
   const base = baseUrl(req);
-  const targets = { start: `${base}/`, decal: `${base}/log` };
+  const med = req.query.med ? `?med=${encodeURIComponent(String(req.query.med).slice(0, 100))}` : '';
+  const targets = { start: `${base}/`, decal: `${base}/log${med}` };
   const text = targets[req.params.which];
   if (!text) return res.status(404).send('Unknown QR code');
   try {

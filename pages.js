@@ -205,7 +205,7 @@ function setup({ config, device }) {
 }
 
 // The page the QR decal opens. One printed code for every phone.
-function log({ config, device }) {
+function log({ config, device, medName = '' }) {
   const med = esc(config.medLabel);
   const shell = (kicker, title, inner, actions) => `<div class="pager-app">
   <header class="topbar"><span class="brand">${esc(config.brandName)}</span></header>
@@ -223,9 +223,12 @@ function log({ config, device }) {
 
   if (device === 'ios') {
     const body = shell('Daily dose', "Log today's dose",
-      `<p class="big">Health is opening. Tap <b>Open</b> if asked, then tap <b>Log</b> next to ${med}, and <b>Taken</b>.</p>
+      medName
+        ? `<p class="big">Health is opening to log ${esc(medName)}. Tap <b>Open</b> if asked, then tap <b>Taken</b>.</p>
+       <p class="hint">Nothing happened? Tap the button below.</p>`
+        : `<p class="big">Health is opening. Tap <b>Open</b> if asked, then tap <b>Log</b> next to ${med}, and <b>Taken</b>.</p>
        <p class="hint">Nothing happened? Tap the button below.</p>`,
-      `<a class="btn" id="open-health" data-autolaunch data-event="log_open_health" href="${esc(config.healthUrl)}">Open Health</a>
+      `<a class="btn" id="open-health" data-autolaunch data-event="log_open_health" href="${esc(medName ? config.logDoseUrl(medName) : config.healthUrl)}">${medName ? 'Log my dose' : 'Open Health'}</a>
        <a class="btn ghost" href="/?device=ios">Setup help</a>`);
     return layout({ title: "Log today's dose", body, arm: 'ios', bodyClass: 'tap' });
   }

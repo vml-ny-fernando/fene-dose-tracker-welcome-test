@@ -29,6 +29,7 @@ One printed decal works for both phones because it holds a normal web link (`/lo
 | `BRAND_NAME` | `KODAMANTRO` | Shown on the splash screen and top bar |
 | `MED_LABEL` | `your medication` | How the medication is named in the steps |
 | `MED_STRENGTH` | `200 mg tablet` | Example dose shown in step 1 |
+| `MED_HEALTH_NAME` | _(empty)_ | Medication name exactly as saved in Health (case sensitive). When set, the sticker opens Health's Log Dose sheet for it. A sticker can override it with `/log?med=Name` (QR: `/qr/decal.svg?med=Name`) |
 | `HEALTH_URL` | `x-apple-health://MedicationsHealthAppPlugin.healthplugin` | Link that opens Apple Health |
 
 3. Open `/kit`, print, and test on an iPhone and an Android phone.
