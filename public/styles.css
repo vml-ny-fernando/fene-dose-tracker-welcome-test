@@ -180,3 +180,53 @@ body.on-splash .topbar,body.on-splash .stepper,body.on-splash .pager-nav{display
 .wk-mark{width:100%;max-width:36px;height:36px;border:1px solid var(--grey)}
 .week li.is-done .wk-mark{background:var(--lime);border-color:var(--lime)}
 .week li.is-done{color:var(--navy);font-weight:700}
+
+/* ---- Round 6 ---- */
+/* Splash: bold, centered headline block; nothing under the button */
+.splash h1{font-weight:700;letter-spacing:.04em}
+.splash-copy{text-align:center;justify-items:center}
+.splash-actions{padding-bottom:0}
+.hint.switch{font-size:13px}
+
+/* Top bar dot progress: white = not started, navy = completed, lime = current */
+.progress-dots{list-style:none;margin:0;padding:0;display:flex;gap:8px;align-items:center}
+.progress-dots li{width:12px;height:12px;border-radius:50%;background:var(--white);border:1.5px solid var(--navy);transition:background-color 200ms ease,border-color 200ms ease}
+.progress-dots li.is-done{background:var(--navy)}
+.progress-dots li.is-current{background:var(--lime);border-color:var(--navy)}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+
+/* Stepper matches the dots: current = lime, completed = navy */
+.st.is-current{border-top-color:var(--lime);color:var(--navy)}
+.st.is-current .st-num{border-color:var(--navy);background:var(--lime);color:var(--navy)}
+.st.is-done .st-num{background:var(--navy);border-color:var(--navy);color:var(--white)}
+.st.is-done.is-current .st-num{background:var(--lime);color:var(--navy);outline:none}
+.done-tag{background:var(--navy);color:var(--white)}
+
+/* You're all set: one tappable row per step, lime number badge, single status */
+.done-slide .slide-inner{gap:20px}
+.summary{list-style:none;margin:0;padding:0;display:grid;gap:0;border-top:2px solid var(--navy)}
+.summary li{display:block;padding:0;border-top:0;border-bottom:1px solid var(--rule);font-size:inherit}
+.summary li:last-child{border-bottom:1px solid var(--rule)}
+.sum-row{all:unset;box-sizing:border-box;width:100%;display:grid;grid-template-columns:40px 1fr auto;gap:20px;align-items:center;padding:16px 0;cursor:pointer;transition:background-color 200ms ease}
+.sum-row:focus-visible{outline:2px solid var(--navy);outline-offset:2px}
+.sum-num{width:40px;height:40px;display:grid;place-items:center;background:var(--lime);color:var(--navy);font-size:18px;font-weight:700}
+.sum-label{font-size:18px;font-weight:400;color:var(--navy)}
+.sum-state{font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--navy);white-space:nowrap;padding:0;background:none}
+.summary li.is-done .sum-state{color:var(--navy);background:none;padding:0}
+.summary li:not(.is-done) .sum-label{color:var(--text-2)}
+.summary li:not(.is-done) .sum-num{background:var(--white);border:2px solid var(--lime)}
+@media (hover:hover){.summary li:not(.is-done) .sum-row:hover{background:var(--white)}}
+@media (prefers-reduced-motion:reduce){.progress-dots li,.sum-row{transition:none}}
+.splash-actions{background:transparent;padding-top:0}
+.done-slide .slide-inner h2{min-height:0}
+.done-slide .slide-inner{gap:16px;padding-top:24px}
+.done-slide .big{font-size:17px}
+.sum-row{padding:12px 0;gap:18px;grid-template-columns:36px 1fr auto}
+.sum-num{width:36px;height:36px;font-size:16px}
+.sum-label{font-size:17px}
+.done-slide .hint{font-size:13px}
+.done-slide .slide-inner{gap:12px;padding-top:20px}
+/* The summary lists the steps, so the stepper hides on the last screen */
+body.on-finish .stepper{display:none}
+.slide-inner > *{flex-shrink:0}
+.done-slide .slide-actions{min-height:0}

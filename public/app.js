@@ -25,7 +25,6 @@
   var stepIds = slides.filter(function (s) { return s.hasAttribute('data-step'); }).map(function (s) { return s.id; });
   var prev = document.querySelector('[data-prev]');
   var pos = document.getElementById('pos');
-  var tally = document.getElementById('tally');
   var SLIDE_KEY = 'dose-kit-slide', DONE_KEY = 'dose-kit-done';
   var current = -1;
 
@@ -43,8 +42,14 @@
 
   function render() {
     var count = stepIds.filter(function (id) { return done[id]; }).length;
-    if (tally) tally.textContent = count + ' of ' + stepIds.length + ' done';
     var curId = slides[current] ? slides[current].id : '';
+    // Top progress dots: white = not started, navy = completed, lime = current
+    document.querySelectorAll('[data-dot]').forEach(function (d, k) {
+      var id = d.getAttribute('data-dot');
+      var isCur = id === curId, isDone = !!done[id];
+      d.className = isCur ? 'is-current' : isDone ? 'is-done' : '';
+      d.querySelector('[data-dot-state]').textContent = 'Step ' + (k + 1) + ': ' + (isCur ? 'current' : isDone ? 'completed' : 'not started');
+    });
 
     document.querySelectorAll('[data-st]').forEach(function (b) {
       var id = b.getAttribute('data-st');
@@ -63,8 +68,9 @@
     document.querySelectorAll('[data-summary]').forEach(function (li) {
       var isDone = !!done[li.getAttribute('data-summary')];
       li.classList.toggle('is-done', isDone);
-      li.querySelector('[data-sum-state]').textContent = isDone ? 'Done' : 'To do';
-      li.querySelector('.sum-go').hidden = isDone;
+      li.querySelector('[data-sum-state]').innerHTML = isDone ? '&#10003; Done' : 'Finish &#8250;';
+      var row = li.querySelector('.sum-row');
+      row.setAttribute('aria-label', li.querySelector('.sum-label').textContent + (isDone ? ', done. Review this step' : ', not done. Go to this step'));
     });
     var title = document.getElementById('finish-title');
     var kicker = document.getElementById('finish-kicker');
@@ -79,6 +85,8 @@
   function update(i) {
     current = i;
     document.body.classList.toggle('on-splash', slides[i].id === 'welcome');
+    document.body.classList.toggle('on-finish', slides[i].id === 'finish');
+    var inner = slides[i].querySelector('.slide-inner'); if (inner) inner.scrollTop = 0;
     prev.disabled = i === 0;
     pos.textContent = (i + 1) + ' / ' + slides.length;
     write(SLIDE_KEY, i);

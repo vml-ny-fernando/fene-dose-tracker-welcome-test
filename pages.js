@@ -93,8 +93,6 @@ function setup({ config, device }) {
     </div>
     <div class="splash-actions">
       <button type="button" class="btn" data-next>Get started</button>
-      <p class="splash-note">${n} quick steps · about ${isAndroid ? 3 : 5} minutes · ${isAndroid ? 'Android' : 'iPhone'}</p>
-      <p class="splash-switch">${switchLink(device)}</p>
     </div>
   </div>
 </section>`;
@@ -107,7 +105,8 @@ function setup({ config, device }) {
         <li>Tap <b>Add a Medication</b>, then scan the label or type the name.</li>
         <li>Enter your own dose from your prescription, like <b>${esc(config.medStrength)}</b>.</li>
         <li>Set how often and what time you take it. Tap <b>Done</b>.</li>
-      </ol>`,
+      </ol>
+      <p class="hint switch">${switchLink(device)}</p>`,
       primary: `<a class="btn" data-complete href="${esc(config.healthUrl)}">Add my medication</a>`,
     }),
     slide({
@@ -141,7 +140,8 @@ function setup({ config, device }) {
         <li>Set the time you usually take ${med}.</li>
         <li>Check it repeats <b>Every day</b>, then tap <b>Save</b>.</li>
       </ol>
-      <p class="hint">Samsung phone? You can also add ${med} in <b>Samsung Health</b> under <b>Medications</b>.</p>`,
+      <p class="hint">Samsung phone? You can also add ${med} in <b>Samsung Health</b> under <b>Medications</b>.</p>
+      <p class="hint switch">${switchLink(device)}</p>`,
       primary: `<a class="btn" data-complete data-event="calendar_tapped" href="${esc(calendarUrl())}" target="_blank" rel="noopener">Add reminder</a>`,
     }),
     slide({
@@ -158,10 +158,15 @@ function setup({ config, device }) {
 
   const finish = `<section class="slide done-slide" id="finish" data-slide="finish" aria-label="All set">
   <div class="slide-inner">
-    <div class="done-mark" aria-hidden="true"></div>
     <p class="kicker" id="finish-kicker">Setup summary</p>
     <h2 id="finish-title">You're all set</h2>
-    <ul class="summary" aria-label="Setup steps">${steps.map((st, i) => `<li data-summary="${st.id}"><span class="sum-num">${String(i + 1).padStart(2, '0')}</span><span class="sum-label">${st.long}</span><span class="sum-state" data-sum-state>To do</span><button type="button" class="sum-go" data-go="${i + 1}" aria-label="Go back to step ${i + 1}: ${st.long}">Go</button></li>`).join('')}</ul>
+    <ol class="summary" aria-label="Setup steps">${steps.map((st, i) => `<li data-summary="${st.id}">
+      <button type="button" class="sum-row" data-go="${i + 1}">
+        <span class="sum-num" aria-hidden="true">${i + 1}</span>
+        <span class="sum-label">${st.long}</span>
+        <span class="sum-state" data-sum-state>Finish &#8250;</span>
+      </button>
+    </li>`).join('')}</ol>
     <p class="big">${isAndroid
       ? 'Each day, when your reminder goes off, take your dose and scan your sticker.'
       : 'Each day, tap <b>Taken</b> on your reminder. Or scan your sticker, then tap <b>Log</b> and <b>Taken</b>.'}</p>
@@ -177,7 +182,7 @@ function setup({ config, device }) {
   const body = `<div class="pager-app">
   <header class="topbar">
     <span class="brand">${esc(config.brandName)}</span>
-    <span class="tally" id="tally" aria-live="polite">0 of ${n} done</span>
+    <ol class="progress-dots" aria-label="Progress">${steps.map((st, i) => `<li data-dot="${st.id}"><span class="sr" data-dot-state>Step ${i + 1}: not started</span></li>`).join('')}</ol>
   </header>
   <nav class="stepper" aria-label="Setup steps">
     <ol style="grid-template-columns:repeat(${n},1fr)">${steps.map((st, i) => `<li><button type="button" class="st" data-go="${i + 1}" data-st="${st.id}" aria-label="Step ${i + 1}: ${st.long}"><span class="st-num" aria-hidden="true">${i + 1}</span><span class="st-label">${st.short}</span><span class="st-state" data-st-state></span></button></li>`).join('')}</ol>
