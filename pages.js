@@ -112,11 +112,11 @@ function setup({ config, device }) {
     slide({
       id: 'remind', label: of(2), where: 'In Health', title: 'Turn on reminders',
       children: `<ol>
-        <li>In Health, open ${med} and scroll to <b>Options</b>.</li>
-        <li>Turn on <b>Dose Reminders</b> and <b>Follow-up Reminders</b>.</li>
-        <li>Tap <b>Add to Favorites</b>.</li>
+        <li>Tap <b>Open Health</b>. You'll see your list of medications.</li>
+        <li>Scroll to the bottom of that list and tap <b>Options</b>.</li>
+        <li>Turn on <b>Dose Reminders</b>. Turn on <b>Follow-up Reminders</b> too.</li>
       </ol>
-      <p class="hint">Each reminder has a <b>Taken</b> button. That's the quickest way to log.</p>`,
+      <p class="hint">Reminders arrive at the times you set in step 1. Each one has a <b>Taken</b> button, the quickest way to log.</p>`,
       primary: `<a class="btn" data-complete href="${esc(config.healthUrl)}">Open Health</a>`,
     }),
     slide({
